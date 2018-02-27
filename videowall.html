@@ -55,6 +55,7 @@
             playerContainer.style='width: ' + tileSize + '%; height: ' + tileSize + '%; display: inline-block;';
             var videoplayer = document.createElement('video');
             videoplayer.controls='controls';
+            videoplayer.onclick = function(e){ if(e.ctrlKey){this.muted = !this.muted;}else{ this.paused?this.play():this.pause();}};
             videoplayer.muted = true;
             videoplayer.src = URL.createObjectURL(file);
             playerContainer.appendChild(videoplayer);

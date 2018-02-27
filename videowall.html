@@ -70,8 +70,7 @@
       function stopVideos(){ players.forEach((p)=>{ p.pause(); p.currentTime = 0; }) }
       function muteVideos(){ players.forEach((p)=>{ p.muted = true; }) }
       function unmuteVideos(){ players.forEach((p)=>{ p.muted = false; }) }
-      // wait for document to load
-      var tid = setInterval(function () {
+      var tid = setInterval(function () { // wait for document to load
         if (document.readyState !== 'complete') return;
         clearInterval(tid);
         addEvent();

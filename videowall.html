@@ -40,7 +40,7 @@
       <a class="button" href="https://fafournier.github.io/LocalVideoWall/" style="padding: 0 10px;" title="More info on LocalVideoWall"> i </a>
     </div>
     <script charset="utf-8">
-      var files = []; var index = 0; var timing = 5; var timer = null; var random = false; var players = [];
+      var files = []; var players = [];
       function addEvent(){
         document.querySelector("input#fileSelector").onclick = function() { pauseVideos(); };
         document.querySelector("input#fileSelector").onchange = function() {
@@ -78,11 +78,9 @@
       }, 200);
       document.onkeydown = function() {
         switch (event.keyCode) {
-          case 9: /* Tab */ case 45: /* Insert */ case 34: /* Page Down */
-          case 36: /* Home */ case 13: /* Enter */
+          case 9: /* Tab */ case 45: /* Insert */ case 34: /* Page Down */ case 36: /* Home */ case 13: /* Enter */
             startVideos(); break;
-          case 33: /* Page Up */ case 8: /* Backspace */ case 35: /* End */ case 27: /* Escape */
-          case 46: /* Delete */ case 19: /* Pause-break */ case 32: /* Spacebar */
+          case 33: /* Page Up */ case 8: /* Backspace */ case 35: /* End */ case 27: /* Escape */ case 46: /* Delete */ case 19: /* Pause-break */ case 32: /* Spacebar */
             stopSlideShow(); break;
           }
         }

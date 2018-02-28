@@ -7,7 +7,7 @@
       a { color: grey; }
       #video-container { width: 100%; height: 100%; }
       body:hover div.settings { visibility: visible;}
-      div.settings { visibility: hidden; text-align: center; position: fixed; bottom: 10px; left: 10px; right: 10px; }
+      div.settings { visibility: hidden; text-align: center; position: fixed; top: 10px; left: 10px; right: 10px; }
       @media print { div.settings { display: none;} }
       .spacer { margin: 0 10px;}
       video { object-fit: cover; height: 100%; width: 100%; margin: 0 auto;}
@@ -45,15 +45,27 @@
         document.querySelector("input#fileSelector").onclick = function() { pauseVideos(); };
         document.querySelector("input#fileSelector").onchange = function() {
           if(this.files && this.files.length>0) files = this.files;
-          var tileSize = 100/(Math.ceil(Math.sqrt(files.length)));
+          var numPlayers = files.length;
+          var gridSize = (Math.ceil(Math.sqrt(numPlayers)));
+          var missing = Math.pow(gridSize,2) - numPlayers;
+          var tileSize = 100/gridSize;
           var container = document.getElementById('video-container');
           players = [];
           while (container.lastChild) { container.removeChild(container.lastChild); } // clean up element
           for(var i = 0; i < files.length; i++) { // add each video in its player
             var playerContainer = document.createElement('div');
-            playerContainer.style='width: ' + tileSize + '%; height: ' + tileSize + '%; max-width: ' + tileSize + '%; max-height: ' + tileSize + '%; display: inline-block; overflow: hidden;';
+            if(missing >= 3 && ((i+1)%gridSize)){
+              playerContainer.style='width: '+(tileSize*2)+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+              missing = missing-3;
+            }else if(missing >= 1 && ((i+1)%gridSize)){
+              playerContainer.style='width: '+tileSize+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+              missing = missing-1;
+            }else{
+              playerContainer.style='width: '+tileSize+'%; height: '+tileSize+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+            }
             var videoplayer = document.createElement('video');
             videoplayer.controls='controls';
+            videoplayer.loop='loop';
             videoplayer.onclick = function(e){ if(e.ctrlKey){this.muted = !this.muted;}else{ this.paused?this.play():this.pause();}};
             videoplayer.muted = true;
             videoplayer.src = URL.createObjectURL(files[i]);

@@ -37,6 +37,8 @@
       <input type="button" id="muteBtn" value="&#128263;">
       <input type="button" id="unmuteBtn" value="&#128264;">
       <span class="spacer"></span>
+      <input type="button" id="clearBtn" value="x">
+      <span class="spacer"></span>
       <a class="button" href="https://fafournier.github.io/LocalVideoWall/" style="padding: 0 10px;" title="More info on LocalVideoWall"> i </a>
     </div>
     <script charset="utf-8">
@@ -44,45 +46,52 @@
       function addEvent(){
         document.querySelector("input#fileSelector").onclick = function() { pauseVideos(); };
         document.querySelector("input#fileSelector").onchange = function() {
-          if(this.files && this.files.length>0) files = this.files;
-          var numPlayers = files.length;
-          var gridSize = (Math.ceil(Math.sqrt(numPlayers)));
-          var missing = Math.pow(gridSize,2) - numPlayers;
-          var tileSize = 100/gridSize;
-          var container = document.getElementById('video-container');
-          players = [];
-          while (container.lastChild) { container.removeChild(container.lastChild); } // clean up element
-          for(var i = 0; i < files.length; i++) { // add each video in its player
-            var playerContainer = document.createElement('div');
-            if(missing >= 3 && ((i+1)%gridSize)){
-              playerContainer.style='width: '+(tileSize*2)+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
-              missing = missing-3;
-            }else if(missing >= 1 && ((i+1)%gridSize)){
-              playerContainer.style='width: '+tileSize+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
-              missing = missing-1;
-            }else{
-              playerContainer.style='width: '+tileSize+'%; height: '+tileSize+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
-            }
-            var videoplayer = document.createElement('video');
-            videoplayer.controls='controls';
-            videoplayer.loop='loop';
-            videoplayer.onclick = function(e){ if(e.ctrlKey){this.muted = !this.muted;}else{ this.paused?this.play():this.pause();}};
-            videoplayer.muted = true;
-            videoplayer.src = URL.createObjectURL(files[i]);
-            playerContainer.appendChild(videoplayer);
-            container.appendChild(playerContainer);
-            players.push(videoplayer);
+          if(this.files && this.files.length>0){
+            files.push(...this.files);
+            loadPlayers();
           }
         };
         [ ["input#startBtn",startVideos],["input#pauseBtn",pauseVideos],["input#stopBtn",stopVideos],
-          ["input#muteBtn",muteVideos],["input#unmuteBtn",unmuteVideos]
+          ["input#muteBtn",muteVideos],["input#unmuteBtn",unmuteVideos],["input#clearBtn",cleanupTracks]
         ].forEach((event)=>{document.querySelector(event[0]).onclick = event[1];})
+      }
+      function loadPlayers(){
+        var numPlayers = files.length; var gridSize = (Math.ceil(Math.sqrt(numPlayers))); var missing = Math.pow(gridSize,2) - numPlayers; var tileSize = 100/gridSize;
+        var container = document.getElementById('video-container');
+        players = [];
+        while(container.lastChild){ container.removeChild(container.lastChild); } // clean up element
+        for(var i = 0; i < files.length; i++) { // add each video in its player
+          var playerContainer = document.createElement('div');
+          if(missing >= 3 && ((i+1)%gridSize)){
+            playerContainer.style='width: '+(tileSize*2)+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+            missing = missing-3;
+          }else if(missing >= 1 && ((i+1)%gridSize)){
+            playerContainer.style='width: '+tileSize+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+            missing = missing-1;
+          }else{
+            playerContainer.style='width: '+tileSize+'%; height: '+tileSize+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+          }
+          var videoplayer = document.createElement('video');
+          videoplayer.controls='controls';
+          videoplayer.loop='loop';
+          videoplayer.onclick = function(e){ if(e.ctrlKey){this.muted = !this.muted;}else{ this.paused?this.play():this.pause();}};
+          videoplayer.muted = true;
+          videoplayer.src = URL.createObjectURL(files[i]);
+          playerContainer.appendChild(videoplayer);
+          container.appendChild(playerContainer);
+          players.push(videoplayer);
+        }
       }
       function startVideos(){ players.forEach((p)=>{ p.play(); }) }
       function pauseVideos(){ players.forEach((p)=>{ p.pause(); }) }
       function stopVideos(){ players.forEach((p)=>{ p.pause(); p.currentTime = 0; }) }
       function muteVideos(){ players.forEach((p)=>{ p.muted = true; }) }
       function unmuteVideos(){ players.forEach((p)=>{ p.muted = false; }) }
+      function cleanupTracks(){
+        players = []; files = [];
+        var container = document.getElementById('video-container');
+        while(container.lastChild) { container.removeChild(container.lastChild); } // clean up element
+      }
       var tid = setInterval(function () { // wait for document to load
         if (document.readyState !== 'complete') return;
         clearInterval(tid);

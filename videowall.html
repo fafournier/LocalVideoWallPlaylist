@@ -49,6 +49,7 @@
           if(this.files && this.files.length>0){
             files.push(...this.files);
             loadPlayers();
+            this.files = [];
           }
         };
         [ ["input#startBtn",startVideos],["input#pauseBtn",pauseVideos],["input#stopBtn",stopVideos],
@@ -56,7 +57,10 @@
         ].forEach((event)=>{document.querySelector(event[0]).onclick = event[1];})
       }
       function loadPlayers(){
-        var numPlayers = files.length; var gridSize = (Math.ceil(Math.sqrt(numPlayers))); var missing = Math.pow(gridSize,2) - numPlayers; var tileSize = 100/gridSize;
+        var numPlayers = files.length;
+        var gridSize = (Math.ceil(Math.sqrt(numPlayers)));
+        var missing = Math.pow(gridSize,2) - numPlayers;
+        var tileSize = 100/gridSize;
         var container = document.getElementById('video-container');
         players = [];
         while(container.lastChild){ container.removeChild(container.lastChild); } // clean up element
@@ -74,7 +78,15 @@
           var videoplayer = document.createElement('video');
           videoplayer.controls='controls';
           videoplayer.loop='loop';
-          videoplayer.onclick = function(e){ if(e.ctrlKey){this.muted = !this.muted;}else{ this.paused?this.play():this.pause();}};
+          videoplayer['dataIndex'] = i;
+          videoplayer.onclick = function(e){
+            e.stopImmediatePropagation(); e.preventDefault(); e.stopPropagation();
+            if(e.ctrlKey){this.muted = !this.muted;}
+            else if(e.altKey){files.splice(e.target['dataIndex'],1); console.log("files", files); loadPlayers();}
+            else if(e.shiftKey){files.unshift(...files.splice(e.target['dataIndex'],1)); console.log("files", files); loadPlayers();}
+            else if(e.metaKey){files.push(...files.splice(e.target['dataIndex'],1)); console.log("files", files); loadPlayers();}
+            else{ this.paused?this.play():this.pause();}
+          };
           videoplayer.muted = true;
           videoplayer.src = URL.createObjectURL(files[i]);
           playerContainer.appendChild(videoplayer);
@@ -102,7 +114,7 @@
           case 9: /* Tab */ case 45: /* Insert */ case 34: /* Page Down */ case 36: /* Home */ case 13: /* Enter */
             startVideos(); break;
           case 33: /* Page Up */ case 8: /* Backspace */ case 35: /* End */ case 27: /* Escape */ case 46: /* Delete */ case 19: /* Pause-break */ case 32: /* Spacebar */
-            stopSlideShow(); break;
+            pauseVideos(); break;
           }
         }
     </script>

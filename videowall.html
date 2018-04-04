@@ -3,7 +3,7 @@
     <title>Local Slideshow</title>
     <meta name="author" content="François Fournier">
     <style>
-      body { background-color: black; color: white; height: 100%; width: 100%; margin: auto; overflow: hidden;}
+      body { background-color: black; color: white; height: 100%; width: 100%; margin: auto; overflow: hidden; font-family: monospace;}
       a { color: grey; }
       #video-container { width: 100%; height: 100%; }
       #video-container > div { display: inline-block; overflow: hidden; }
@@ -38,7 +38,10 @@
       .player-24 { width: 16.66vw; height: 20vh; }
       .player-25 { width: 20vw; height: 20vh; }
       .player-30 { width: 16.66vw; height: 20vh; }
+      .player-35 { width: 14.28vw; height: 20vh; }
       .player-36 { width: 16.66vw; height: 16.66vh; }
+      .player-42 { width: 14.28vw; height: 16.66vh; }
+      .player-49 { width: 14.28vw; height: 14.28vh; }
     </style>
   </head>
   <body>
@@ -57,7 +60,7 @@
         <option>2</option>
         <option>3</option>
         <option>4</option>
-        <option>6</option>
+        <option selected>6</option>
         <option>9</option>
         <option>12</option>
         <option>15</option>
@@ -65,12 +68,25 @@
         <option>24</option>
         <option>25</option>
         <option>30</option>
+        <option>35</option>
         <option>36</option>
+        <option>42</option>
+        <option>49</option>
       </select>
       <span class="spacer"></span>
       <input type="button" id="clearBtn" value="x">
       <span class="spacer"></span>
       <a class="button" href="https://fafournier.github.io/LocalVideoWallPlaylist/" style="padding: 0 10px;" title="More info on LocalVideoWallPlaylist"> i </a>
+      <br>
+      <ul style="text-align: left; margin: auto; width: 400px; max-width: 100%;">
+        <li><b>Click modifiers on videos / Shortcuts</b></li>
+        <li>ctrl = mute</li>
+        <li>alt = remove from playlist</li>
+        <li>shift = move to 1st position in playlist (plays later)</li>
+        <li>meta = toggle framing (cover / full)</li>
+        <li>F11 = full screen toggle</li>
+        <li>Exit mouse from window to hide menu</li>
+      </ul>
     </div>
     <script charset="utf-8">
       var files = []; var players = []; var nextVideo = 0;
@@ -88,8 +104,9 @@
           ["input#muteBtn", muteVideos],["input#unmuteBtn", unmuteVideos],["input#clearBtn", cleanupTracks]
         ].forEach((event)=>{document.querySelector(event[0]).onclick = event[1];})
       }
-      function loadPlayers(event){
-        const numPlayers = event && event.target && event.target.value || 1;
+      function loadPlayers(){
+        const selector = document.getElementById('layoutSelect');
+        const numPlayers = (selector && selector.value && parseInt(selector.value)) || 1;
         var container = document.getElementById('video-container');
         if(players.length < numPlayers){
           for(var i = 0; i < numPlayers; i++) { // add each video in its player
@@ -111,7 +128,6 @@
               videoplayer.addEventListener('ended',function(event){
                 resetPlayer(event.target);
                 loadFiles();
-
               }, false);
               videoplayer.muted = true;
               playerContainer.appendChild(videoplayer);
@@ -162,7 +178,12 @@
       function unmuteVideos(){ players.forEach((p)=>{ p.muted = false; }) }
       function cleanupTracks(){
         files = [];
-        players.forEach((p)=>{ resetPlayer(p); });
+        players.forEach((p)=>{
+          if(p && p.parentNode && p.parentNode.parentNode && p.parentNode.parentNode.removeChild){
+            p.parentNode.parentNode.removeChild(p.parentNode); // clean up element
+          }
+        });
+        players = [];
         loadPlayers();
         loadFiles();
       }

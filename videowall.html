@@ -80,7 +80,7 @@
           ["input#muteBtn", muteVideos],["input#unmuteBtn", unmuteVideos],["input#clearBtn", cleanupTracks]
         ].forEach((event)=>{document.querySelector(event[0]).onclick = event[1];})
       }
-      function loadPlayers(){
+      function loadPlayers(event){
         const numPlayers = event && event.target && event.target.value || 1;
         var container = document.getElementById('video-container');
         if(players.length < numPlayers){
@@ -103,6 +103,7 @@
               videoplayer.addEventListener('ended',function(event){
                 resetPlayer(event.target);
                 loadFiles();
+
               }, false);
               videoplayer.muted = true;
               playerContainer.appendChild(videoplayer);
@@ -117,9 +118,11 @@
             if(i < numPlayers){
               players[i].parentNode.className = 'player-'+numPlayers;
             }else{
-              if(players[i].parentNode && players[i].parentNode.parentNode){
+              if(players[i] && players[i].parentNode && players[i].parentNode.parentNode && players[i].parentNode.parentNode.removeChild){
                 players[i].parentNode.parentNode.removeChild(players[i].parentNode); // clean up element
               }
+              players.splice(i, 1);
+              i--;
             }
           }
         }
@@ -151,7 +154,9 @@
       function unmuteVideos(){ players.forEach((p)=>{ p.muted = false; }) }
       function cleanupTracks(){
         files = [];
+        players.forEach((p)=>{ resetPlayer(p); });
         loadPlayers();
+        loadFiles();
       }
       var tid = setInterval(function () { // wait for document to load
         if (document.readyState !== 'complete') return;

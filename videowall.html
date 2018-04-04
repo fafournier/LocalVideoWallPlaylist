@@ -3,16 +3,17 @@
     <title>Local Slideshow</title>
     <meta name="author" content="François Fournier">
     <style>
-      body { background-color: black; color: white; height: 100%; width: 100%; margin: auto; }
+      body { background-color: black; color: white; height: 100%; width: 100%; margin: auto; overflow: hidden;}
       a { color: grey; }
       #video-container { width: 100%; height: 100%; }
+      #video-container > div { display: inline-block; overflow: hidden; }
       body:hover div.settings { visibility: visible;}
       div.settings { visibility: hidden; text-align: center; position: fixed; top: 10px; left: 10px; right: 10px; }
       @media print { div.settings { display: none;} }
       .spacer { margin: 0 10px;}
       video { object-fit: cover; height: 100%; width: 100%; margin: 0 auto;}
       video.contain { object-fit: contain;}
-      input[type=button], a.button { /*.stitched */
+      input[type=button], a.button, .stitched { /*.stitched */
         cursor: pointer;
         position: relative;
         margin: 5px;
@@ -25,6 +26,15 @@
         text-shadow: -1px -1px #aa3030;
         font-weight: normal;
       }
+      .player-1 { width: 100vw; height: 100vh; }
+      .player-2 { width: 50vw; height: 100vh; }
+      .player-3 { width: 33.33vw; height: 100vh; }
+      .player-4 { width: 50vw; height: 50vh; }
+      .player-6 { width: 33.33vw; height: 50vh; }
+      .player-9 { width: 33.33vw; height: 33.33vh; }
+      .player-12 { width: 25vw; height: 33.33vh; }
+      .player-15 { width: 20vw; height: 33.33vh; }
+      .player-20 { width: 20vw; height: 25vh; }
     </style>
   </head>
   <body>
@@ -38,72 +48,110 @@
       <input type="button" id="muteBtn" value="&#128263;">
       <input type="button" id="unmuteBtn" value="&#128264;">
       <span class="spacer"></span>
+      <select class="stitched" id="layoutSelect">
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+        <option>4</option>
+        <option>6</option>
+        <option>9</option>
+        <option>12</option>
+        <option>15</option>
+        <option>20</option>
+      </select>
+      <span class="spacer"></span>
       <input type="button" id="clearBtn" value="x">
       <span class="spacer"></span>
-      <a class="button" href="https://fafournier.github.io/LocalVideoWall/" style="padding: 0 10px;" title="More info on LocalVideoWall"> i </a>
+      <a class="button" href="https://fafournier.github.io/LocalVideoWallPlaylist/" style="padding: 0 10px;" title="More info on LocalVideoWallPlaylist"> i </a>
     </div>
     <script charset="utf-8">
-      var files = []; var players = [];
+      var files = []; var players = []; var nextVideo = 0;
       function addEvent(){
-        document.querySelector("input#fileSelector").onclick = function() { pauseVideos(); };
+        document.querySelector("select#layoutSelect").onchange = loadPlayers;
+        document.querySelector("input#fileSelector").onclick = pauseVideos;
         document.querySelector("input#fileSelector").onchange = function() {
           if(this.files && this.files.length>0){
             files.push(...this.files);
-            loadPlayers();
             this.files = null;
           }
+          loadFiles();
         };
-        [ ["input#startBtn",startVideos],["input#pauseBtn",pauseVideos],["input#stopBtn",stopVideos],
-          ["input#muteBtn",muteVideos],["input#unmuteBtn",unmuteVideos],["input#clearBtn",cleanupTracks]
+        [ ["input#startBtn", startVideos],["input#pauseBtn", pauseVideos],["input#stopBtn", stopVideos],
+          ["input#muteBtn", muteVideos],["input#unmuteBtn", unmuteVideos],["input#clearBtn", cleanupTracks]
         ].forEach((event)=>{document.querySelector(event[0]).onclick = event[1];})
       }
       function loadPlayers(){
-        var numPlayers = files.length;
-        var gridSize = (Math.ceil(Math.sqrt(numPlayers)));
-        var missing = Math.pow(gridSize,2) - numPlayers;
-        var tileSize = 100/gridSize;
+        const numPlayers = event && event.target && event.target.value || 1;
         var container = document.getElementById('video-container');
-        players = [];
-        while(container.lastChild){ container.removeChild(container.lastChild); } // clean up element
-        for(var i = 0; i < files.length; i++) { // add each video in its player
-          var playerContainer = document.createElement('div');
-          if(missing >= 3 && ((i+1)%gridSize)){
-            playerContainer.style='width: '+(tileSize*2)+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
-            missing = missing-3;
-          }else if(missing >= 1 && ((i+1)%gridSize)){
-            playerContainer.style='width: '+tileSize+'%; height: '+(tileSize*2)+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
-            missing = missing-1;
-          }else{
-            playerContainer.style='width: '+tileSize+'%; height: '+tileSize+'%; display: inline-block; overflow: hidden; vertical-align: top; float: right;';
+        if(players.length < numPlayers){
+          for(var i = 0; i < numPlayers; i++) { // add each video in its player
+            if(!players[i]){ // create a player when it does not exist otherwise, just change the display class
+              var playerContainer = document.createElement('div');
+              playerContainer.className = 'player-'+numPlayers;
+              var videoplayer = document.createElement('video');
+              videoplayer.controls='controls';
+              // videoplayer.loop='loop';
+              videoplayer['dataIndex'] = null;
+              videoplayer.onclick = function(e){
+                e.stopImmediatePropagation(); e.preventDefault(); e.stopPropagation();
+                if(e.ctrlKey){this.muted = !this.muted;}
+                else if(e.altKey){if(e.target['dataIndex'] !== null){ files.splice(e.target['dataIndex'],1); resetPlayer(e.target); loadFiles(); }}
+                else if(e.shiftKey){if(e.target['dataIndex'] !== null){ files.unshift(...files.splice(e.target['dataIndex'],1)); resetPlayer(e.target); loadFiles(); }}
+                else if(e.metaKey){ if(!~e.target.className.indexOf(' contain')) e.target.className += ' contain'; else e.target.className = e.target.className.replace(' contain', '');}
+                else{ this.paused?this.play():this.pause();}
+              };
+              videoplayer.addEventListener('ended',function(event){
+                resetPlayer(event.target);
+                loadFiles();
+              }, false);
+              videoplayer.muted = true;
+              playerContainer.appendChild(videoplayer);
+              container.appendChild(playerContainer);
+              players.push(videoplayer);
+            }else{
+              players[i].parentNode.className = 'player-'+numPlayers;
+            }
           }
-          var videoplayer = document.createElement('video');
-          videoplayer.controls='controls';
-          videoplayer.loop='loop';
-          videoplayer['dataIndex'] = i;
-          videoplayer.onclick = function(e){
-            e.stopImmediatePropagation(); e.preventDefault(); e.stopPropagation();
-            if(e.ctrlKey){this.muted = !this.muted;}
-            else if(e.altKey){files.splice(e.target['dataIndex'],1); console.log("files", files); loadPlayers();}
-            else if(e.shiftKey){files.unshift(...files.splice(e.target['dataIndex'],1)); console.log("files", files); loadPlayers();}
-            else if(e.metaKey){ if(!~e.target.className.indexOf(' contain')) e.target.className += ' contain'; else e.target.className = e.target.className.replace(' contain', '');}
-            else{ this.paused?this.play():this.pause();}
-          };
-          videoplayer.muted = true;
-          videoplayer.src = URL.createObjectURL(files[i]);
-          playerContainer.appendChild(videoplayer);
-          container.appendChild(playerContainer);
-          players.push(videoplayer);
+        }else if(players.length > numPlayers){
+          for(var i = 0; i < players.length; i++) { // add each video in its player
+            if(i < numPlayers){
+              players[i].parentNode.className = 'player-'+numPlayers;
+            }else{
+              if(players[i].parentNode && players[i].parentNode.parentNode){
+                players[i].parentNode.parentNode.removeChild(players[i].parentNode); // clean up element
+              }
+            }
+          }
+        }
+        loadFiles();
+      }
+      function loadFiles(){
+        for(var i = 0; i < players.length; i++) {
+          const videoplayer = players[i];
+          if(videoplayer['dataIndex'] === null){
+            if(files.length > 0 && files[nextVideo]){
+              videoplayer.src = URL.createObjectURL(files[nextVideo]);
+              videoplayer['dataIndex'] = nextVideo;
+              nextVideo++;
+              videoplayer.play()
+            }else{
+              nextVideo = 0;
+              if(files.length > 0) loadFiles();
+            }
+          }
         }
       }
-      function startVideos(){ players.forEach((p)=>{ p.play(); }) }
+      function resetPlayer(videoplayer){
+        videoplayer.pause(); videoplayer.currentTime = 0; videoplayer['dataIndex'] = null;
+      }
+      function startVideos(){ loadFiles(); players.forEach((p)=>{ p.play(); }) }
       function pauseVideos(){ players.forEach((p)=>{ p.pause(); }) }
       function stopVideos(){ players.forEach((p)=>{ p.pause(); p.currentTime = 0; }) }
       function muteVideos(){ players.forEach((p)=>{ p.muted = true; }) }
       function unmuteVideos(){ players.forEach((p)=>{ p.muted = false; }) }
       function cleanupTracks(){
-        players = []; files = [];
-        var container = document.getElementById('video-container');
-        while(container.lastChild) { container.removeChild(container.lastChild); } // clean up element
+        files = [];
+        loadPlayers();
       }
       var tid = setInterval(function () { // wait for document to load
         if (document.readyState !== 'complete') return;
@@ -118,6 +166,8 @@
             pauseVideos(); break;
           }
         }
+
+        loadPlayers();
     </script>
   </body>
 </html>
